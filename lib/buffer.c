@@ -111,9 +111,15 @@ static ssize_t fuse_buf_fd_to_fd(const struct fuse_buf *dst, size_t dst_off,
 				 const struct fuse_buf *src, size_t src_off,
 				 size_t len)
 {
-	char buf[4096];
+    //printf("HERE\n");
+	//char buf[4096];
+	char *buf = malloc(131072);
+    if (!buf) {
+        perror("malloc");
+    }
 	struct fuse_buf tmp = {
-		.size = sizeof(buf),
+		//.size = sizeof(buf),
+		.size = 131072,
 		.flags = 0,
 	};
 	ssize_t res;
@@ -127,8 +133,10 @@ static ssize_t fuse_buf_fd_to_fd(const struct fuse_buf *dst, size_t dst_off,
 
 		res = fuse_buf_read(&tmp, 0, src, src_off, this_len);
 		if (res < 0) {
-			if (!copied)
+			if (!copied) {
+                free(buf);
 				return res;
+            }
 			break;
 		}
 		if (res == 0)
@@ -137,8 +145,10 @@ static ssize_t fuse_buf_fd_to_fd(const struct fuse_buf *dst, size_t dst_off,
 		read_len = res;
 		res = fuse_buf_write(dst, dst_off, &tmp, 0, read_len);
 		if (res < 0) {
-			if (!copied)
+			if (!copied) {
+                free(buf);
 				return res;
+            }
 			break;
 		}
 		if (res == 0)
@@ -153,6 +163,8 @@ static ssize_t fuse_buf_fd_to_fd(const struct fuse_buf *dst, size_t dst_off,
 		src_off += res;
 		len -= res;
 	}
+
+    free(buf);
 
 	return copied;
 }
@@ -169,6 +181,8 @@ static ssize_t fuse_buf_splice(const struct fuse_buf *dst, size_t dst_off,
 	off_t dstpos_val;
 	ssize_t res;
 	size_t copied = 0;
+
+    printf("SHOULD NOT BE HERE\n");
 
 	if (flags & FUSE_BUF_SPLICE_MOVE)
 		splice_flags |= SPLICE_F_MOVE;
